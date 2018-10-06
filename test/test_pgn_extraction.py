@@ -1,5 +1,6 @@
 import unittest
-from pgn_data_extraction import parse_thinking_time_from_comment
+import chess
+from pgn_data_extraction import parse_thinking_time_from_comment, estimate_position
 
 
 class MoveTimeParsing(unittest.TestCase):
@@ -11,13 +12,13 @@ class MoveTimeParsing(unittest.TestCase):
 
     def test_hours_minutes_and_seconds(self):
         comment = "[%emt 0:05:42]"
-        move_time = 5*60 + 42
+        move_time = 5 * 60 + 42
         parsed_time = parse_thinking_time_from_comment(comment)
         self.assertEqual(move_time, parsed_time)
 
     def test_hms_and_milliseconds(self):
         comment = "[%emt 1:23:45.678]"
-        move_time = 1*60*60 + 23*60 + 45.678
+        move_time = 1 * 60 * 60 + 23 * 60 + 45.678
         parsed_time = parse_thinking_time_from_comment(comment)
         self.assertEqual(move_time, parsed_time)
 
@@ -28,7 +29,7 @@ class MoveTimeParsing(unittest.TestCase):
 
     def test_interleved_comment_and_time(self):
         comment = "[%clk 1:37:00] Beliavsky clearly suprised here takes a full [%emt 0:20:00] on this move"
-        move_time = 20*60
+        move_time = 20 * 60
         parsed_time = parse_thinking_time_from_comment(comment)
         self.assertEqual(move_time, parsed_time)
 
@@ -37,6 +38,31 @@ class MoveTimeParsing(unittest.TestCase):
         parsed_time = parse_thinking_time_from_comment(comment)
         self.assertIsNone(parsed_time)
 
+
+class PositionEstimate(unittest.TestCase):
+    def test_starting_position(self):
+        fen_string = chess.STARTING_BOARD_FEN
+        piece_counting_value = 0
+        estimate = estimate_position(fen_string)
+        self.assertEqual(piece_counting_value, estimate)
+
+    def test_one_pawn_but_stalemate(self):
+        fen_string = '3k4/3P4/3K4/8/8/8/8/8'
+        piece_counting_value = 1
+        estimate = estimate_position(fen_string)
+        self.assertEqual(piece_counting_value, estimate)
+
+    def test_eight_white_queens_agains_two_black_rooks_and_one_bishop(self):
+        fen_string = 'kr5Q/rb4Q1/5Q2/4Q3/3Q4/2Q5/1Q6/Q3K3'
+        piece_counting_value = (8*9) - (2*5 + 3)
+        estimate = estimate_position(fen_string)
+        self.assertEqual(piece_counting_value, estimate)
+
+    def test_fischer_spassky_1972_first_game(self):
+        fen_string = '8/1p6/1P1K4/pk6/8/8/5B2/8'
+        piece_counting_value = (3+1) - (2*1)
+        estimate = estimate_position(fen_string)
+        self.assertEqual(piece_counting_value, estimate)
 
 
 if __name__ == '__main__':

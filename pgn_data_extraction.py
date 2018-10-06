@@ -23,7 +23,7 @@ def parse_thinking_time_from_comment(comment):
     try:
         hhmmss_str = re.search(hhmmss_format, time_str).group(0)
         h, m, s = hhmmss_str.split(':')
-        return int(h)*60*60 + int(m)*60 + float(s)
+        return int(h) * 60 * 60 + int(m) * 60 + float(s)
     except AttributeError:
         logger.debug("Comment '{}' is not on the hh:mm:ss format.".format(comment))
         pass
@@ -32,6 +32,21 @@ def parse_thinking_time_from_comment(comment):
         return float(time_str)
     except ValueError:
         return None
+
+
+def estimate_position(fen):
+    piece_values = {
+        'Q': 9,
+        'R': 5,
+        'B': 3,
+        'N': 3,
+        'P': 1
+    }
+
+    white_total = sum(fen.count(piece) * piece_values[piece] for piece in piece_values)
+    black_total = sum(fen.count(piece.lower()) * piece_values[piece] for piece in piece_values)
+
+    return white_total - black_total
 
 
 def count_games(pgn_file):
@@ -47,7 +62,6 @@ if __name__ == '__main__':
     game_files = "ficsgamesdb_{}_standard2000_movetimes.pgn"
     pgn_file = os.path.join(dir_path, "games", game_files.format("20180101"))
 
-    # print(count_games(pgn_file))
     with open(pgn_file, 'r') as file:
         counter = 0
         time_controls = defaultdict(int)
@@ -71,7 +85,6 @@ if __name__ == '__main__':
                 node = node.variations[0]
                 thinking_time = parse_thinking_time_from_comment(node.comment)
                 time_left = time_left - thinking_time + extra_time
-                #print("Move {} (move time {})".format(node.move, thinking_time))
 
             game = chess.pgn.read_game(file)
 
