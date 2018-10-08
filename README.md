@@ -8,8 +8,8 @@ limits are in the order of tens of minutes per game) from reasonably strong play
 ## Pre-processed data set
 
 As of now we'll only be looking at a very limited set of parameters so to speed up the Machine Learning algorithms
-we've pre-processed the source data into comma separated value files (CSV files) in the `data1/` and `data2/` folders.
-This was done by running different version of `python preprocess_dataset.py`.
+we've pre-processed the source data into comma separated value files (CSV files) in the `data1/`, `data2/` and `data3`
+folders. This was done by running different versions of `python preprocess_dataset.py`.
 
 ### `data1/`
 
@@ -32,8 +32,32 @@ instantly this value but be `1.0`), and the crude position estimate is simply pi
 count as positive values and black pieces as negative values. Queens are worth 9 points, Rooks 5 points, Knights and
 Bishops 3 points and Pawns 1 point.
 
-Another ides would be to incorporate a chess engine's evaluation (e.g. the open source chess engine [Stockfish](
-https://stockfishchess.org)), fixed to a certain ply depth count.
+### `data3/`
+
+In `data2/` we had a bias towards Black in the position estimate as Black might have captured a piece in the 20th move
+which White would recapture back in move 21 but isn't counted for in our crude position estimate. Instead we're now
+both estimating the position after White's 20th move (`white_position_estimate`) and Black's 20th move 
+(`black_position_estimate`) resulting in lines on the form
+
+```text
+white_elo, black_elo, white_time_usage, black_time_usage, white_position_estimate, black_position_estimate, result
+```
+
+As a matter of fact we can see that we managed to cancel out the bias.
+
+````bash
+> cat data3/ficsgamesdb_201[0-7]_standard2000_movetimes.csv | awk -F , '{ sumWhite += $5; sumBlack += $6 } END { if (NR > 0) print "Average estimate after move 20 by player..."; print " White: " (sumWhite / NR); print " Black: " sumBlack / NR }'
+Average estimate after move 20 by player...
+ White: 0.36689
+ Black: -0.389409
+````
+
+### Future ideas of pre-processing and other variables
+
+One idea would be to incorporate a chess engine's evaluation (e.g. the open source chess engine [Stockfish](
+https://stockfishchess.org)), fixed to a certain ply depth count. This would prevent biases implemented with 
+crude estimates such as our piece counting.
+
 
 ## Development
 

@@ -39,36 +39,41 @@ def preprocess_pgn_file(input_file, output_file):
                     else:
                         raise ValueError("Result in PGN file is '{}' which is not supported.".format(result))
 
+                    white_turns_position_estimate = 0
                     white_current_time = initial_time
                     white_total_time = initial_time
                     white_used_time = 0
 
+                    black_turns_position_estimate = 0
                     black_current_time = initial_time
                     black_total_time = initial_time
                     black_used_time = 0
 
                     # Loop through moves in game
                     for ply in range(40):
+                        board = game.board()
                         next_move = game.variations[0]
                         thinking_time = parse_thinking_time_from_comment(next_move.comment)
                         if game.board().turn is chess.WHITE:
+                            black_turns_position_estimate = estimate_position(board.board_fen())
                             white_used_time += thinking_time
                             white_total_time += extra_time
                             white_current_time = white_current_time - thinking_time + extra_time
                         else:
+                            white_turns_position_estimate = estimate_position(board.board_fen())
                             black_used_time += thinking_time
                             black_total_time += extra_time
                             black_current_time = black_current_time - thinking_time + extra_time
                         game = next_move
 
                     # Now both players have made 20 moves
-                    position_estimate = estimate_position(game.board().board_fen())
                     white_time_left_ratio = white_current_time / white_total_time
                     black_time_left_ratio = black_current_time / black_total_time
 
-                    # (white_ELO, black_ELO, white_time_usage, black_time_usage, result)
-                    csv_line = "{},{},{},{},{},{}\n".format(white_elo, black_elo, white_time_left_ratio,
-                                                            black_time_left_ratio, position_estimate, result_value)
+                    # (white_ELO, black_ELO, white_time_usage, black_time_usage, white_estimate, black_estimate, result)
+                    csv_line = "{},{},{},{},{},{},{}\n".format(white_elo, black_elo, white_time_left_ratio,
+                                                            black_time_left_ratio, white_turns_position_estimate,
+                                                            black_turns_position_estimate, result_value)
                     csv_file.write(csv_line)
 
                 # Next game, possibly 'None'
@@ -89,7 +94,7 @@ if __name__ == '__main__':
         futures = list()
         for date_string in list(range(2010, 2018)) + list((201801,)):
             input_file = os.path.join(dir_path, "games", game_files.format(date_string))
-            output_file = os.path.join(dir_path, "data2", csv_files.format(date_string))
+            output_file = os.path.join(dir_path, "data3", csv_files.format(date_string))
             print("Starting job for date '{}'...".format(date_string))
             futures.append(ppe.submit(preprocess_pgn_file, input_file, output_file))
 
