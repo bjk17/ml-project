@@ -49,6 +49,10 @@ def estimate_position(fen):
     return white_total - black_total
 
 
+def convert_result_string_to_value(result):
+    return float(eval(result))/2 + 0.5
+
+
 def count_games(pgn_file):
     with open(pgn_file, 'r') as file:
         count = 0

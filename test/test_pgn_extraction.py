@@ -1,6 +1,6 @@
 import unittest
 import chess
-from pgn_data_extraction import parse_thinking_time_from_comment, estimate_position
+from pgn_data_extraction import parse_thinking_time_from_comment, estimate_position, convert_result_string_to_value
 
 
 class MoveTimeParsing(unittest.TestCase):
@@ -54,15 +54,32 @@ class PositionEstimate(unittest.TestCase):
 
     def test_eight_white_queens_agains_two_black_rooks_and_one_bishop(self):
         fen_string = 'kr5Q/rb4Q1/5Q2/4Q3/3Q4/2Q5/1Q6/Q3K3'
-        piece_counting_value = (8*9) - (2*5 + 3)
+        piece_counting_value = (8 * 9) - (2 * 5 + 3)
         estimate = estimate_position(fen_string)
         self.assertEqual(piece_counting_value, estimate)
 
     def test_fischer_spassky_1972_first_game(self):
         fen_string = '8/1p6/1P1K4/pk6/8/8/5B2/8'
-        piece_counting_value = (3+1) - (2*1)
+        piece_counting_value = (3 + 1) - (2 * 1)
         estimate = estimate_position(fen_string)
         self.assertEqual(piece_counting_value, estimate)
+
+
+class ResultStringValueConversion(unittest.TestCase):
+    def test_white_wins(self):
+        result = "1-0"
+        result_value = convert_result_string_to_value(result)
+        self.assertEqual(1.0, result_value)
+
+    def test_draw(self):
+        result = "1/2-1/2"
+        result_value = convert_result_string_to_value(result)
+        self.assertEqual(0.5, result_value)
+
+    def test_black_wins(self):
+        result = "0-1"
+        result_value = convert_result_string_to_value(result)
+        self.assertEqual(0.0, result_value)
 
 
 if __name__ == '__main__':
