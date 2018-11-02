@@ -5,6 +5,12 @@ limits are in the order of tens of minutes per game) from reasonably strong play
 
 [1]: https://www.ficsgames.org/download.html
 
+## Links
+
+- [Final report](https://www.overleaf.com/read/jmghkwtsxnbx)
+- [Presentation slides](https://www.overleaf.com/read/bmzccjprmybx)
+
+
 ## Pre-processed data set
 
 As of now we'll only be looking at a very limited set of parameters so to speed up the Machine Learning algorithms
