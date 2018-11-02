@@ -1,9 +1,9 @@
 import os
+import datetime
 import re
 import logging
+import concurrent.futures
 import chess.pgn
-from collections import defaultdict
-from pprint import pprint
 
 logger = logging.getLogger(__file__)
 
@@ -58,42 +58,24 @@ def count_games(pgn_file):
         count = 0
         while chess.pgn.read_game(file):
             count += 1
-        return count
+        return count, pgn_file
 
 
 if __name__ == '__main__':
     dir_path = os.path.dirname(os.path.realpath(__file__))
+
     game_files = "ficsgamesdb_{}_standard2000_movetimes.pgn"
-    pgn_file = os.path.join(dir_path, "games", game_files.format("20180101"))
 
-    with open(pgn_file, 'r') as file:
-        counter = 0
-        time_controls = defaultdict(int)
-        results = defaultdict(int)
+    print("Program starts at '{}'".format(datetime.datetime.now()))
+    with concurrent.futures.ProcessPoolExecutor() as ppe:
+        futures = list()
+        for date_string in list(range(2010, 2018)) + list("2018{:02}".format(MONTH) for MONTH in range(1, 10)):
+            input_file = os.path.join(dir_path, "games", game_files.format(date_string))
+            print("Starting job for date '{}'...".format(date_string))
+            futures.append(ppe.submit(count_games, input_file))
 
-        # Loop through games
-        game = chess.pgn.read_game(file)
-        while game:
-            counter += 1
+        for future in concurrent.futures.as_completed(futures):
+            count, pgn_file = future.result()
+            print("{} games in file {}".format(count, pgn_file))
 
-            time_control = game.headers["TimeControl"]
-            time_controls[time_control] += 1
-            time_left, extra_time = map(int, time_control.split('+'))
-
-            result = game.headers["Result"]
-            results[result] += 1
-
-            # Loop through moves in game
-            node = game
-            while not node.is_end():
-                node = node.variations[0]
-                thinking_time = parse_thinking_time_from_comment(node.comment)
-                time_left = time_left - thinking_time + extra_time
-
-            game = chess.pgn.read_game(file)
-
-        print("Number of games in dataset: {}".format(counter))
-        print("Results sorted by popularity:")
-        pprint(sorted(results.items(), key=lambda kv: kv[1], reverse=True))
-        print("Time controls sorted by popularity:")
-        pprint(sorted(time_controls.items(), key=lambda kv: kv[1], reverse=True))
+    print("Program ends at '{}'".format(datetime.datetime.now()))
